@@ -1,0 +1,519 @@
+:: StoryTitle
+Twine Geolocation Test
+
+
+:: StoryData
+{
+  "ifid": "4753b6cf-68a0-4fe8-87f1-6231f97ca7ea",
+  "format": "SugarCube",
+  "format-version": "2.37.3",
+  "start": "Karte",
+  "zoom": 1
+}
+
+
+:: Ende {"position":"925,100","size":"100,100"}
+Du hast das Quiz abgeschlossen und $punkte Punkte erreicht.
+
+
+:: Falsch {"position":"675,100","size":"100,100"}
+Das ist falsch!<<if $punkte_temp gt 2>><<set $punkte_temp to $punkte_temp/2>><<else>><<set $punkte_temp to 2>><</if>>
+
+<<return "Zurück">>
+
+
+:: Karte {"position":"550,225","size":"100,100"}
+<div id="map" style="height: 400px;"></div> <<set $debug to false>>
+//Debug-Position: 48.198799,16.355411 / 48.198988,16.356344 / 48.198581,16.357218 / 48.198806,16.358187
+
+<<script>>
+/* Annahmen:
+   - $stage wählt das aktuelle Ziel aus $markers
+   - $markers[$stage] hat { coords: [lat,lng], passage: "QuizPassage" }
+   - <div id="map"></div> existiert in der Passage (mit Höhe via CSS)
+*/
+const m = State.variables.markers[State.variables.stage];
+const debugMode = (typeof State.variables.debug !== 'undefined') ? State.variables.debug : true;
+
+setup.loadLeaflet()
+  .then(function () {
+    // Map + Marker aufsetzen
+    setup.leaflet.initScene({
+      containerId: "map",
+      center: m.coords,
+      zoom: 17,
+      targetCoords: m.coords,
+      targetInteractive: debugMode,
+      quizPassage: m.passage,
+      userStart: State.variables.usermarker || [0, 0],
+      userIconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Man_walking_icon_1410105361.svg/250px-Man_walking_icon_1410105361.svg.png'
+    });
+
+    // Debug oder Geolocation starten
+    if (debugMode) {
+      setup.leaflet.startDebugUI({ containerSelector: "#map", intervalMs: 2000 });
+    } else {
+      setup.leaflet.startGeolocation({
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 5000
+      });
+    }
+  })
+  .catch(console.error);
+<</script>>
+
+
+:: Karte mit Autopan {"position":"225,350","size":"100,100"}
+<div id="map" style="height: 400px;"></div> <<set $debug to false>>
+//Debug-Position: 48.198799,16.355411 / 48.198988,16.356344 / 48.198581,16.357218 / 48.198806,16.358187
+
+<<script>>
+const m = State.variables.markers[State.variables.stage];
+const debugMode = (typeof State.variables.debug !== 'undefined') ? State.variables.debug : true;
+
+setup.loadLeaflet()
+  .then(function () {
+    // Szene sauber initialisieren (macht intern Teardown)
+    setup.leaflet.initScene({
+      containerId: "map",
+      center: m.coords,
+      zoom: 17,
+      targetCoords: m.coords,
+      targetInteractive: debugMode,
+      quizPassage: m.passage,
+      userStart: State.variables.usermarker || [0, 0],
+      userIconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Man_walking_icon_1410105361.svg/250px-Man_walking_icon_1410105361.svg.png'
+    });
+
+    if (debugMode) {
+      // --- DEBUG: ohne AutoPan ---
+      setup.leaflet.startDebugUI({ containerSelector: "#map", intervalMs: 2000 });
+
+      // Falls zuvor ein Geolocation-Watch lief (von einem früheren Besuch), sicherheitshalber stoppen
+      if (setup.leafletGeoWatchId && navigator.geolocation) {
+        navigator.geolocation.clearWatch(setup.leafletGeoWatchId);
+        setup.leafletGeoWatchId = null;
+      }
+
+    } else {
+      // --- GEOLOCATION: mit AutoPan ---
+      // 1) Vorherigen Watch (falls vorhanden) stoppen, damit nichts doppelt läuft
+      if (setup.leafletGeoWatchId && navigator.geolocation) {
+        navigator.geolocation.clearWatch(setup.leafletGeoWatchId);
+        setup.leafletGeoWatchId = null;
+      }
+
+      // 2) Neuen Watch starten und die Modulfunktion mit autoPan nutzen
+      if (navigator.geolocation) {
+        setup.leafletGeoWatchId = navigator.geolocation.watchPosition(function (pos) {
+          setup.leaflet.updateUserPosition(
+            pos.coords.latitude,
+            pos.coords.longitude,
+            { autoPan: true }           // <— Karte folgt der Position
+          );
+        }, function (err) {
+          console.error("Geolocation-Fehler:", err);
+        }, {
+          enableHighAccuracy: true,
+          maximumAge: 1000,
+          timeout: 5000
+        });
+      } else {
+        console.warn("Geolocation wird nicht unterstützt.");
+      }
+    }
+  })
+  .catch(console.error);
+<</script>>
+
+
+:: Karte ohne Autopan (aktuell) {"position":"225,225","size":"100,100"}
+<div id="map" style="height: 400px;"></div> <<set $debug to false>>
+//Debug-Position: 48.198799,16.355411 / 48.198988,16.356344 / 48.198581,16.357218 / 48.198806,16.358187
+
+<<script>>
+/* Annahmen:
+   - $stage wählt das aktuelle Ziel aus $markers
+   - $markers[$stage] hat { coords: [lat,lng], passage: "QuizPassage" }
+   - <div id="map"></div> existiert in der Passage (mit Höhe via CSS)
+*/
+const m = State.variables.markers[State.variables.stage];
+const debugMode = (typeof State.variables.debug !== 'undefined') ? State.variables.debug : true;
+
+setup.loadLeaflet()
+  .then(function () {
+    // Map + Marker aufsetzen
+    setup.leaflet.initScene({
+      containerId: "map",
+      center: m.coords,
+      zoom: 17,
+      targetCoords: m.coords,
+      targetInteractive: debugMode,
+      quizPassage: m.passage,
+      userStart: State.variables.usermarker || [0, 0],
+      userIconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Man_walking_icon_1410105361.svg/250px-Man_walking_icon_1410105361.svg.png'
+    });
+
+    // Debug oder Geolocation starten
+    if (debugMode) {
+      setup.leaflet.startDebugUI({ containerSelector: "#map", intervalMs: 2000 });
+    } else {
+      setup.leaflet.startGeolocation({
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 5000
+      });
+    }
+  })
+  .catch(console.error);
+<</script>>
+
+
+:: StoryInit {"position":"550,100","size":"100,100"}
+<<set $stage to 0>>
+<<set $punkte to 0>>
+<<set $punkte_temp to 8>>
+
+<<set $markers to [ //jeweils: Koordinaten als Array, Zielpassage als String
+    {coords: [48.197976,16.354474],passage: "WiBS1"},
+    {coords: [48.198059,16.350435],passage: "WiBS2"},
+    {coords: [48.197647,16.348466],passage: "WiBS3"}
+]>>
+
+<<set $usermarker to [48.198799,16.355411]>>
+
+
+:: Weiter {"position":"800,100","size":"100,100"}
+Richtig!
+
+Auf zur [[nächsten Station|Karte]]!
+
+
+:: WiBS1 {"position":"675,225","size":"100,100"}
+!!Station 1: Pierre
+Hier sind $punkte_temp Punkte zu gewinnen.
+
+<audio controls>
+  <source src="https://lehrerweb.wien/fileadmin/ai-playground/Twine_GPS_Schnitzeljagd/sound_rainforest.ogg" type="audio/ogg">
+Your browser does not support the audio element.
+</audio>
+
+Wieviel ist 2 * 5?<<set _correct to 10>>
+<<numberbox "_antwort" 1>>
+
+<<link "Weiter">><<if _antwort is _correct>><<set $stage += 1>><<set $punkte += $punkte_temp>><<set $punkte_temp to 8>><<goto "Weiter">><<else>><<goto "Falsch">><</if>><</link>>
+
+
+:: WiBS2 {"position":"675,350","size":"100,100"}
+!!Station 2: Café Ritter
+Hier sind $punkte_temp Punkte zu gewinnen.
+
+[img[https://lehrerweb.wien/fileadmin/ai-playground/Twine_GPS_Schnitzeljagd/katzi.jpg]]
+
+Wieviel ist 2 + 4?<<set _correct to "sechs">>
+<label><<radiobutton "_antwort" "fünf" >> fünf</label>
+<label><<radiobutton "_antwort" "sechs">> sechs</label>
+<label><<radiobutton "_antwort" "sieben">> sieben</label>
+
+<<link "Weiter">><<if _antwort is _correct>><<set $stage += 1>><<set $punkte += $punkte_temp>><<set $punkte_temp to 8>><<goto "Weiter">><<else>><<goto "Falsch">><</if>><</link>>
+
+
+:: WiBS3 {"position":"675,475","size":"100,100"}
+!!Station 3: McDonalds
+Hier sind $punkte_temp Punkte zu gewinnen.
+
+Wieviel ist 56 - 22?<<set _correct to "vierunddreißig">>
+<<listbox "_antwort">>
+	<<option "zwölf">>
+	<<option "neunundzwanzig">>
+	<<option "achtundsechzig">>
+	<<option "vierunddreißig">>
+	<<option "siebzehn">>
+<</listbox>>
+
+<<link "Weiter">><<if _antwort is _correct>><<set $punkte += $punkte_temp>><<goto "Ende">><<else>><<goto "Falsch">><</if>><</link>>
+
+
+:: StoryScript [script]
+//UIBar.destroy();
+
+/* =========================
+   Leaflet Utilities für SugarCube
+   ========================= */
+
+setup.loadLeaflet = function () {
+  return new Promise(function (resolve, reject) {
+    // CSS laden (nur einmal)
+    if (!$("link[href*='leaflet.css']").length) {
+      $("head").append('<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />');
+    }
+    // JS laden (nur einmal)
+    if (typeof L === "undefined") {
+      $.getScript("https://unpkg.com/leaflet@1.9.4/dist/leaflet.js")
+        .done(resolve)
+        .fail(function () { reject("Leaflet konnte nicht geladen werden."); });
+    } else {
+      resolve();
+    }
+  });
+};
+
+/* =========================
+   setup.leaflet: Map-Controller
+   ========================= */
+setup.leaflet = (function () {
+
+  // interner Kontext (Handles, Status)
+  const ctx = {
+    map: null,
+    userMarker: null,
+    targetMarker: null,
+    debugTimer: null,
+    geoWatchId: null,
+    uiIds: null,
+    popupShown: false,
+    targetCoords: null,
+  };
+
+  // ------ Helfer
+  function teardown() {
+    try {
+      if (ctx.debugTimer) { clearInterval(ctx.debugTimer); ctx.debugTimer = null; }
+      if (ctx.geoWatchId && navigator.geolocation) {
+        navigator.geolocation.clearWatch(ctx.geoWatchId);
+        ctx.geoWatchId = null;
+      }
+      if (ctx.map) { ctx.map.remove(); ctx.map = null; }
+      if (ctx.uiIds && ctx.uiIds.wrapper) { $(`#${ctx.uiIds.wrapper}`).remove(); }
+      ctx.userMarker = null;
+      ctx.targetMarker = null;
+      ctx.uiIds = null;
+      ctx.popupShown = false;
+      ctx.targetCoords = null;
+    } catch (e) {
+      console.warn("Teardown-Warnung:", e);
+    }
+  }
+
+  function buildIds() {
+    const uid = Date.now();
+    return {
+      wrapper: `dbgWrap-${uid}`,
+      lat:     `dbgLat-${uid}`,
+      lng:     `dbgLng-${uid}`,
+      btn:     `dbgBtn-${uid}`,
+    };
+  }
+
+  function createMap(containerId, center, zoom = 17, tileUrl, attribution) {
+    const map = L.map(containerId).setView(center, zoom);
+    L.tileLayer(tileUrl || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: attribution || '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    ctx.map = map;
+    return map;
+  }
+
+  function ensureUserMarker(initialCoords, iconUrl) {
+    const userIcon = L.icon({
+      iconUrl: iconUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Man_walking_icon_1410105361.svg/250px-Man_walking_icon_1410105361.svg.png',
+      iconSize: [20, 32],
+      iconAnchor: [10, 32]
+    });
+
+    if (!Array.isArray(initialCoords) || initialCoords.length !== 2) {
+      initialCoords = [0, 0];
+    }
+
+    if (!State.variables.usermarker || State.variables.usermarker.length !== 2) {
+      State.variables.usermarker = initialCoords.slice();
+    }
+
+    ctx.userMarker = L.marker(State.variables.usermarker, { icon: userIcon }).addTo(ctx.map);
+    return ctx.userMarker;
+  }
+
+  function addTargetMarker(coords, { interactive = false } = {}) {
+    ctx.targetCoords = coords;
+    ctx.targetMarker = L.marker(coords, { interactive }).addTo(ctx.map);
+    return ctx.targetMarker;
+  }
+
+  function bindQuizPopup(passageName, selector = ".gotoPassage") {
+    if (!ctx.targetMarker) return;
+    ctx.targetMarker.bindPopup('<a href="#" class="gotoPassage">Quiz öffnen</a>');
+    ctx.map.on('popupopen', function (e) {
+      const $link = $(e.popup._contentNode).find(selector);
+      $link.on("click", function (ev) {
+        ev.preventDefault();
+        Engine.play(passageName);
+      });
+    });
+  }
+
+  function distanceToTarget(fromCoords) {
+    if (!ctx.map || !ctx.targetCoords) return Infinity;
+    return ctx.map.distance(fromCoords, ctx.targetCoords);
+  }
+
+  function updateUserPosition(lat, lng, { autoPan = false } = {}) {
+    if (!ctx.userMarker || !ctx.map) return;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    const pos = [lat, lng];
+    State.variables.usermarker = pos;
+    ctx.userMarker.setLatLng(pos);
+
+    if (autoPan) {
+      ctx.map.panTo(pos, { animate: true, duration: 0.4 });
+    }
+
+    const dist = distanceToTarget(pos);
+    // Schwelle 30 m: Popup toggeln
+    if (dist <= 30 && !ctx.popupShown) {
+      if (ctx.targetMarker) ctx.targetMarker.openPopup();
+      ctx.popupShown = true;
+    } else if (dist > 30 && ctx.popupShown) {
+      ctx.map.closePopup();
+      ctx.popupShown = false;
+    }
+
+    return dist;
+  }
+
+  function startDebugUI({ containerSelector = "#map", intervalMs = 2000 } = {}) {
+    // UI-IDs erzeugen + Wrapper im DOM platzieren
+    ctx.uiIds = buildIds();
+    const $host = $(containerSelector).length ? $(containerSelector).parent() : $("body");
+
+    const form = $(`
+      <div id="${ctx.uiIds.wrapper}" style="position:absolute; top:10px; left:10px; background:white; padding:10px; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.2); border-radius:6px;">
+        <div style="font-weight:600; margin-bottom:6px;">Debug-Position</div>
+        <label style="display:block; margin-bottom:4px;">Lat:
+          <input type="text" id="${ctx.uiIds.lat}" value="${State.variables.usermarker ? State.variables.usermarker[0] : 0}" style="width:140px;">
+        </label>
+        <label style="display:block; margin-bottom:8px;">Lng:
+          <input type="text" id="${ctx.uiIds.lng}" value="${State.variables.usermarker ? State.variables.usermarker[1] : 0}" style="width:140px;">
+        </label>
+        <button id="${ctx.uiIds.btn}">Position setzen</button>
+      </div>
+    `);
+    $host.append(form);
+
+    // Klick-Handler
+    $(`#${ctx.uiIds.btn}`).on("click", function () {
+      const lat = parseFloat($(`#${ctx.uiIds.lat}`).val());
+      const lng = parseFloat($(`#${ctx.uiIds.lng}`).val());
+      updateUserPosition(lat, lng);
+    });
+
+    // Periodisches Update
+    ctx.debugTimer = setInterval(function () {
+      const lat = parseFloat($(`#${ctx.uiIds.lat}`).val());
+      const lng = parseFloat($(`#${ctx.uiIds.lng}`).val());
+      updateUserPosition(lat, lng);
+    }, intervalMs);
+
+    // einmal initial auslösen
+    const lat0 = parseFloat($(`#${ctx.uiIds.lat}`).val());
+    const lng0 = parseFloat($(`#${ctx.uiIds.lng}`).val());
+    updateUserPosition(lat0, lng0);
+  }
+
+  function stopDebugUI() {
+    if (ctx.debugTimer) { clearInterval(ctx.debugTimer); ctx.debugTimer = null; }
+    if (ctx.uiIds && ctx.uiIds.wrapper) { $(`#${ctx.uiIds.wrapper}`).remove(); }
+    ctx.uiIds = null;
+  }
+
+  function startGeolocation(options) {
+    if (!navigator.geolocation) {
+      console.warn("Geolocation wird nicht unterstützt.");
+      return null;
+    }
+    const opts = Object.assign({
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 5000
+    }, options || {});
+    ctx.geoWatchId = navigator.geolocation.watchPosition(function (pos) {
+      updateUserPosition(pos.coords.latitude, pos.coords.longitude);
+    }, function (err) {
+      console.error("Geolocation-Fehler:", err);
+    }, opts);
+    return ctx.geoWatchId;
+  }
+
+  function stopGeolocation() {
+    if (ctx.geoWatchId && navigator.geolocation) {
+      navigator.geolocation.clearWatch(ctx.geoWatchId);
+      ctx.geoWatchId = null;
+    }
+  }
+
+  // Öffentliche API
+  return {
+    // Lebenszyklus
+    teardown,
+    // Initialisierung
+    createMap,
+    ensureUserMarker,
+    addTargetMarker,
+    bindQuizPopup,
+    // Bewegungen & Abstand
+    updateUserPosition,
+    distanceToTarget,
+    // Debug & Geo
+    startDebugUI,
+    stopDebugUI,
+    startGeolocation,
+    stopGeolocation,
+    // bequeme Kombi-Init
+    initScene: function ({
+      containerId = "map",
+      center = [0, 0],
+      zoom = 17,
+      targetCoords = null,
+      targetInteractive = false,
+      quizPassage = null,
+      userStart = [0, 0],
+      userIconUrl,
+      tileUrl,
+      attribution
+    } = {}) {
+      teardown();
+      const map = createMap(containerId, center, zoom, tileUrl, attribution);
+      if (targetCoords) {
+        addTargetMarker(targetCoords, { interactive: targetInteractive });
+      }
+      if (quizPassage) {
+        bindQuizPopup(quizPassage);
+      }
+      ensureUserMarker(userStart, userIconUrl);
+      return map;
+    }
+  };
+})();
+
+
+
+l10nStrings.restartTitle = "Neustart";  // German (de)
+l10nStrings.restartMesgPrompt = 'Der gesamte Spielfortschritt geht dabei verloren. Möchtest du wirklich von vorne beginnen?';
+l10nStrings.textSave = 'Speichern';
+l10nStrings.textLoad = 'Laden';
+l10nStrings.textImport = 'Importieren';
+l10nStrings.textExport = 'Exportieren';
+l10nStrings.textDelete = 'Löschen';
+l10nStrings.continueTitle = 'Fortsetzen';
+l10nStrings.savesTitle = 'Speicherstände';
+l10nStrings.savesHeaderBrowser = 'Im Browser';
+l10nStrings.savesHeaderDisk = 'Auf Datenträger';
+l10nStrings.savesLabelBrowserClear = 'Alle Speicherstände im Browser löschen';
+l10nStrings.savesLabelBrowserExport = 'Browserspielstände als bundle exportieren';
+l10nStrings.savesLabelBrowserImport = 'Browserspielstände als bundle importieren';
+l10nStrings.savesLabelDiskLoad = 'Von Datenträger laden';
+l10nStrings.savesLabelDiskSave = 'Auf Datenträger speichern';
+l10nStrings.savesTextBrowserAuto = 'Auto';
+l10nStrings.savesTextBrowserSlot = 'Slot';
+l10nStrings.savesTextNoDate = 'unbekanntes Datum';
