@@ -1,4 +1,6 @@
-This sample code provides minimum functionality to use geolocation on mobile devices in Twine/Sugarcube. Just import the Twee file into Twine. The structure is quite simple and can be kept for most projects. Only the stages need to be modified, and their names and coordinates entered into the *$markers* object.
+This sample code provides minimum functionality to use geolocation on mobile devices in Twine/Sugarcube. Currently it only works on Android devices.
+
+Just import the Twee file into Twine. The structure is quite simple and can be kept for most projects. Only the stages need to be modified, and their names and coordinates entered into the *$markers* object.
 
 The appearance of the story is standard Sugarcube, only the UI bar is removed.
 
