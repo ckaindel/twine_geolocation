@@ -2,7 +2,7 @@ This sample code provides minimum functionality to use geolocation on mobile dev
 
 Just import the Twee file into Twine. The structure is quite simple and can be kept for most projects. Only the stages need to be modified, and their names and coordinates entered into the *$markers* object.
 
-The appearance of the story is standard Sugarcube, only the UI bar is removed.
+The appearance of the story is standard Sugarcube. The UI was translated to German, this can be reversed by removing the function calls at the bottom of the Story Javascript.
 
 Structure:
 - **Story Javascript** holds custom functions, mainly for map display using the [Leaflet](https://leafletjs.com/) library. They are called in the "Karte"(map) passage.
