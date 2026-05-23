@@ -9,6 +9,6 @@ Structure:
 - **Stages**: There are 3 stages with dummy quiz questions using methods provided by the Sugarcube Story Format. Events at the stages are handled by standard Twine code. Additional stages can easily be created as Twine passages. Their names and coordinates then need to be added to the *$stages* object in the StoryInit passage. The bottom paragraph is the same for most stages and links to the "Falsch" or "Weiter" passages, depending on the answers to the quiz. Only the bottom paragraph of the final stage links to "Ende" instead of "Weiter".
 - **Falsch** (wrong): This passage reduces the maximum points for the current stage and links back to it.
 - **Weiter** (go on): This passage links to the map passage.
-- **Ende** (end): This is the final passage. The total numeber of points is shown.
+- **Ende** (end): This is the final passage. The total number of points is shown.
 
 There is a debug mode that allows to enter coordinates manually. It can be turned on/off in the "Karte" passage by setting the $debug variable.
