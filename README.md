@@ -15,4 +15,4 @@ The bottom paragraph is the same for most stages and links to the "Falsch" or "W
 - **Weiter** (go on): This passage links to the map passage.
 - **Ende** (end): This is the final passage. The total number of points is shown.
 
-There is a debug mode that allows to enter coordinates manually. It can be turned on/off in the "Karte" passage by setting the $debug variable.
+There is a debug mode that allows to enter coordinates manually. It can be toggled in the "Karte" passage by setting the $debug variable.
